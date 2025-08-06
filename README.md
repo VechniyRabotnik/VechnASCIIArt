@@ -123,4 +123,4 @@ var asciiChars = []byte(" .:-=+*#%@")
 
 ---
 
-**Лицензия:** 
+**Лицензия:** Apache-2.0 license
