@@ -36,7 +36,7 @@ go get github.com/nfnt/resize
 2. Соберите программу:
 
 ```bash
-go build -o ascii-art
+go build -o vechnasciiart
 ```
 
 3. Запустите программу:
