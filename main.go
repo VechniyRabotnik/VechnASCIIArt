@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"image"
 	"image/color"
@@ -18,8 +19,17 @@ import (
 var asciiChars = []byte(" .:-=+*#%@")
 
 func main() {
-	filenameWithoutExt := "input"
-	dir := "."
+	filenamePtr := flag.String("file", "input", "Имя файла без расширения")
+	pathPtr := flag.String("path", ".", "Путь к директории с изображением")
+	widthPtr := flag.Int("width", 80, "Ширина ASCII-арт")
+	outputPtr := flag.String("output", "", "Путь к файлу для сохранения результата (если пусто — вывод в консоль)")
+
+	flag.Parse()
+
+	filenameWithoutExt := *filenamePtr
+	dir := *pathPtr
+	newWidth := *widthPtr
+	outputFile := *outputPtr
 
 	entries, err := os.ReadDir(dir)
 	if err != nil {
@@ -57,24 +67,34 @@ func main() {
 		log.Fatal(err)
 	}
 
-	newWidth := 80
 	ratio := float64(img.Bounds().Dy()) / float64(img.Bounds().Dx())
 	newHeight := uint(float64(newWidth) * ratio * 0.55)
 
 	resized := resize.Resize(uint(newWidth), newHeight, img, resize.Lanczos3)
 
-	generateASCII(resized)
+	if outputFile != "" {
+		outF, err := os.Create(outputFile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer outF.Close()
+
+		generateASCII(resized, outF)
+		fmt.Println("Результат сохранен в файл:", outputFile)
+	} else {
+		generateASCII(resized, os.Stdout)
+	}
 }
 
-func generateASCII(img image.Image) {
+func generateASCII(img image.Image, out *os.File) {
 	bounds := img.Bounds()
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
 			c := color.GrayModel.Convert(img.At(x, y)).(color.Gray)
 			brightness := c.Y
 			index := int(brightness) * (len(asciiChars) - 1) / 255
-			fmt.Printf("%c", asciiChars[index])
+			fmt.Fprintf(out, "%c", asciiChars[index])
 		}
-		fmt.Println()
+		fmt.Fprintln(out)
 	}
 }
